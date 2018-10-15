@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<title>Conway's Game of Life</title>
+
+<style>
+  body {
+    background: white;
+  }
+  .cell {
+    border: 1px solid black;
+  }
+  .dot {
+    height: 8px; width:8px;
+    background: blue;
+    position: absolute;
+  }
+  .playingboard {
+    background: beige;
+    border-collapse: collapse;
+    border-spacing: 0;
+    border: 1.5px solid black;
+    padding: 0;
+  }
+</style>
+</head>
+
+<body>
+
+This is Conway's Game of Life.
+
+<p><button onclick="start();" class="start">Start</button></p>
+
+<p><button onclick="board = step(board);">Step</button></p>
+
+<p><button onclick="board = reset(board);">Reset</button></p>
+
+<script src="conway.js"></script>
+
+</body>
+</html>
