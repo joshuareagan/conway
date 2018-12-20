@@ -1,12 +1,14 @@
+
+
 function makeBoard(x) {
-  var b = [];
+  var wholeThing = [];
   for (var i = 0; i < x; i++) {
     var row = [];
     for (var j = 0; j < x; j++)
       row.push(false);
-    b.push(row);
+    wholeThing.push(row);
   };
-  return b;
+  return wholeThing;
 };
 
 function printBoard(board) {
@@ -102,15 +104,17 @@ function identifyNeighbors(board, square) {
 
 function squareStep(board, square) {
   var liveNeighbors = identifyNeighbors(board, square);
+  var x = square[0];
+  var y = square[1];
 
-  if ((liveNeighbors == 3) ||
-     ((liveNeighbors == 2) && (board[square[0]][square[1]]))) return true;
+  if ( (liveNeighbors == 3) ||
+       ((liveNeighbors == 2) && (board[x][y])) ) return true;
   return false;
 };
 
 function boardStep(board) {
   var len = board.length;
-  var nextBoard = makeBoard(len);
+  var nextBoard = makeBoard(size);
   for (var i = 0; i < len; i++)
     for (var j = 0; j < len; j++)
       nextBoard[i][j] = squareStep(board, [i, j]);
@@ -121,12 +125,6 @@ function makeAlive(board, square) {
   board[square[0]][square[1]] = true;
   return board;
 };
-
-var size = 100;
-var scale = 5;
-
-board = makeBoard(size);
-lastTime = null;
 
 function elt(name, className) {
   var elt = document.createElement(name);
@@ -149,13 +147,35 @@ function makeTable(board) {
       table.childNodes[i].appendChild(cell);
     };
   };
-  table.addEventListener("click", function(event) {
-    var cell = event.target;
-    if (cell.style.backgroundColor == "beige") {
-      cell.style.backgroundColor = "gray"
-    } else cell.style.backgroundColor = "beige";
-  });
   return table;
+};
+
+function cellSwitch(event) {
+  var cell = event.target;
+  if (cell.style.backgroundColor == "beige") {
+    cell.style.backgroundColor = "gray"
+  } else cell.style.backgroundColor = "beige";
+};
+
+function canEditTable() {
+  table.addEventListener("click", cellSwitch);
+};
+
+function noEditTable() {
+  table.removeEventListener("click", cellSwitch);
+};
+
+var size = 60;
+var scale = 7;
+var board = makeBoard(size);
+var table = document.body.appendChild(makeTable(board));
+
+canEditTable();
+
+function printBoard(board) {
+  var len = board.length;
+  for (var i = 0; i < len; i++)
+    console.log(board[i]);
 };
 
 function tableRead(table) {
@@ -171,49 +191,65 @@ function tableRead(table) {
   return nextBoard;
 };
 
-var table = document.body.appendChild(makeTable(board));
-
-function step(board) {
-  board = tableRead(table);
+function step() {
   board = boardStep(board);
-  var table = makeTable(board);
-  var oldTable = document.body.getElementsByClassName("playingboard")[0];
-  document.body.replaceChild(table, oldTable);
-  return board;
+  displayNewBoard(board);
 };
 
-function reset(board) {
+function reset() {
   board = makeBoard(size);
-  var table = makeTable(board);
-  var oldTable = document.body.getElementsByClassName("playingboard")[0];
-  document.body.replaceChild(table, oldTable);
-  return board;
+  displayNewBoard(board);
+  canEditTable();
 };
 
-function start() {
+function stepButton() {
+  var stopped = document.body.getElementsByClassName("stop");
+  if (stopped.length > 0) {
+    stopButton();
+  };
+  board = tableRead(table);
+  step();
+  canEditTable();
+};
+
+function resetButton() {
+  var stopped = document.body.getElementsByClassName("stop");
+  if (stopped.length > 0) {
+    stopButton();
+  };
+  reset();
+};
+
+function startButton() {
   var button = document.body.getElementsByClassName("start")[0];
   var newButton = elt("button", "stop");
   newButton.textContent = "Stop";
-  newButton.setAttribute("onclick", "stop();");
+  newButton.setAttribute("onclick", "stopButton();");
   button.parentNode.replaceChild(newButton, button);
-  mainLoop()
+  noEditTable();
+  board = tableRead(table);
+  mainLoop();
 };
 
-function mainLoop(time) {
+function displayNewBoard(board) {
+  table = makeTable(board);
+  var oldTable = document.body.getElementsByClassName("playingboard")[0];
+  document.body.replaceChild(table, oldTable);
+};
+
+function mainLoop() {
   var animate = document.body.getElementsByClassName("stop");
   if (animate.length > 0) {
-    if (time > (lastTime + 300)) {
-      board = step(board);
-      lastTime = time;
-    };
-    requestAnimationFrame(mainLoop);
+    step();
+    setTimeout(mainLoop, 200);
   };
 };
 
-function stop() {
+function stopButton() {
   var button = document.body.getElementsByClassName("stop")[0];
   var newButton = elt("button", "start");
   newButton.textContent = "Start";
-  newButton.setAttribute("onclick", "start();");
+  newButton.setAttribute("onclick", "startButton();");
   button.parentNode.replaceChild(newButton, button);
+  canEditTable();
 };

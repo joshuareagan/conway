@@ -12,11 +12,6 @@
   .cell {
     border: 1px solid black;
   }
-  .dot {
-    height: 8px; width:8px;
-    background: blue;
-    position: absolute;
-  }
   .playingboard {
     background: beige;
     border-collapse: collapse;
@@ -31,11 +26,11 @@
 
 This is Conway's Game of Life.
 
-<p><button onclick="start();" class="start">Start</button></p>
+<p><button onclick="startButton();" class="start">Start</button></p>
 
-<p><button onclick="board = step(board);">Step</button></p>
+<p><button onclick="stepButton();">Step</button></p>
 
-<p><button onclick="board = reset(board);">Reset</button></p>
+<p><button onclick="resetButton();">Reset</button></p>
 
 <script src="conway.js"></script>
 
