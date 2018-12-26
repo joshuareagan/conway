@@ -241,7 +241,7 @@ function mainLoop() {
   var animate = document.body.getElementsByClassName("stop");
   if (animate.length > 0) {
     step();
-    setTimeout(mainLoop, 200);
+    setTimeout(mainLoop, 250);
   };
 };
 
