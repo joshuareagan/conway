@@ -1,6 +1,7 @@
-function initBoardState(size) {
+function initBoardState(height, width) {
 
-  var currentBoard = addBumper(makeBoard(size));
+  var currentBoard = addBumper(makeBoard(height, width));
+  var changes = [];
   var boardAPIs = {
     stepBoard, blank, tableToBoard
   }
@@ -8,34 +9,27 @@ function initBoardState(size) {
   return boardAPIs;
 
   function stepBoard() {
-    var newBoard = makeBoard(size);
-    console.log(currentBoard);
+    var nextBoard = addBumper(makeBoard(height, width));
+    changes = [];
 
-    for (var i = 0; i < size; i++)
-      for (var j = 0; j < size; j++) {
-        newBoard[i][j][0] = squareStep(currentBoard, [i+1, j+1]);
-        if (newBoard[i][j][0] && !currentBoard[i+1][j+1][0]) {
-          cellChange(currentBoard, [i+1, j+1], true);
-          newBoard[i][j][1] = currentBoard[i+1][j+1][1];
-        }
-        if (!newBoard[i][j][0] && currentBoard[i+1][j+1][0]) {
-          cellChange(currentBoard, [i+1, j+1], false);
-          newBoard[i][j][1] = currentBoard[i+1][j+1][1];
-        }
+    for (var i = 1; i <= height; i++)
+      for (var j = 1; j <= width; j++) {
+        squareStep(currentBoard, nextBoard, [i, j]);
       }
-    currentBoard = addBumper(newBoard);
-    return currentBoard;
+
+    currentBoard = nextBoard;
+    return changes;
   }
 
   function blank() {
-    currentBoard = addBumper(makeBoard(size));
+    currentBoard = addBumper(makeBoard(height, width));
     return currentBoard;
   }
 
   function tableToBoard(table) {
     var k = 0;
-    for (var i = 1; i <= size; i++) {
-      for (var j = 1; j <= size; j++) {
+    for (var i = 1; i <= height; i++) {
+      for (var j = 1; j <= width; j++) {
         var cell = document.body.getElementsByClassName("cell")[k];
         if (cell.style.backgroundColor == "beige") {
           if (currentBoard[i][j][0]) cellChange(currentBoard, [i, j], false);
@@ -51,70 +45,84 @@ function initBoardState(size) {
     return currentBoard;
   }
 
-  function cellChange(currentBoard, spot, birth) {
+  function cellChange(board, spot, birth) {
     var x = spot[0];
     var y = spot[1];
-    var result;
 
     for (var i = x - 1; i <= x + 1; i++) {
       for (var j = y - 1; j <= y + 1; j++) {
         if ( (x == i) && (y == j) ) continue;
         if (birth) {
-          currentBoard[i][j][1]++;
+          board[i][j][1]++;
         }
         else {
-          currentBoard[i][j][1]--;
+          board[i][j][1]--;
         }
       }
     }
+    return board;
   }
 
-  function makeBoard(size) {
+  function makeBoard(height, width) {
     var board = [];
-    for (var i = 0; i < size; i++) {
+    for (var i = 0; i < height; i++) {
       var row = [];
-      for (var j = 0; j < size; j++)
+      for (var j = 0; j < width; j++)
         row.push([false, 0]);
       board.push(row);
     }
     return board;
   }
 
-  function squareStep(board, square) {
-    var x = square[0];
-    var y = square[1];
-    var alive = board[x][y][0];
-    var liveNeighbors = board[x][y][1];  // identifyNeighbors(board, square);
+  function squareStep(lastBoard, nextBoard, spot) {
+    var x = spot[0];
+    var y = spot[1];
+    var alive = lastBoard[x][y][0];
+    var liveNeighbors = lastBoard[x][y][1];
+    nextBoard[x][y][1] += lastBoard[x][y][1];
 
     if ( (liveNeighbors == 3) ||
-         ((liveNeighbors == 2) && (alive)) ) return true;
-    return false;
+         ((liveNeighbors == 2) && (alive)) ) {
+      if (!alive) {
+        cellChange(nextBoard, spot, true);
+        changes.push(spot);
+      } 
+      nextBoard[x][y][0] = true;  
+    }
+    else {
+      if (alive) {
+        cellChange(nextBoard, spot, false);
+        changes.push(spot);
+      }
+      nextBoard[x][y][0] = false;
+    }
+  return nextBoard;
   }
 
   function addBumper(board) {
     var topLeft = board[0][0];
-    var topRight = board[0][size-1];
-    var bottomLeft = board[size-1][0];
-    var bottomRight = board[size-1][size-1];
+    var topRight = board[0][width-1];
+    var bottomLeft = board[height-1][0];
+    var bottomRight = board[height-1][width-1];
 
     var newTop = [];
     newTop.push(bottomRight);
-    for (var i = 0; i < size; i++) {
-      newTop.push(board[size-1][i]);
+    for (var i = 0; i < width; i++) {
+      newTop.push(board[height-1][i]);
     }
     newTop.push(bottomLeft);
     board.unshift(newTop);
 
     var newBottom = [];
     newBottom.push(topRight);
-    for (var i = 0; i < size; i++) {
+    for (var i = 0; i < width; i++) {
       newBottom.push(board[1][i]);
     }
     newBottom.push(topLeft);
     board.push(newBottom);
 
-    for (var i = 1; i <= size; i++) {
-      board[i].unshift(board[i][size-1]);
+    for (var i = 1; i <= height; i++) {
+      board[i].unshift(board[i][width-1]);
       board[i].push(board[i][1]);
     }
 
@@ -124,22 +132,22 @@ function initBoardState(size) {
 
 function initTableState(scale) {
 
-  var table = makeTable(boardState.stepBoard());
+  var table = makeTable(boardState.blank());
   document.body.appendChild(table);
   edit(true);
+  var cells = document.body.getElementsByClassName("cell");
 
   var tableAPIs = {
-    edit, display, table
+    edit, display, table, blank
   }
   return tableAPIs;
 
   function makeTable(board) {
-    len = board.length-2;
     var table = elemClass("table", "playingboard");
-    for (var i = 0; i < len; i++) {
+    for (var i = 0; i < height; i++) {
       var row = elemClass("tr");
       table.appendChild(row);
-      for (var j = 0; j < len; j++) {
+      for (var j = 0; j < width; j++) {
         var cell = elemClass("td", "cell");
         cell.style.width = scale + "px";
         cell.style.height = scale + "px";
@@ -151,8 +159,20 @@ function initTableState(scale) {
     return table;
   }
 
-  function cellSwitch(event) {
+  function blank() {
+    newTable = makeTable(boardState.blank());
+    table.parentNode.replaceChild(newTable, table);
+    table = newTable;
+    edit(true);
+    cells = document.body.getElementsByClassName("cell");
+  }
+
+  function clickCellSwitch(event) {
     var cell = event.target;
+    cellSwitch(cell);
+  }
+
+  function cellSwitch(cell) {
     if (cell.style.backgroundColor == "beige") {
       cell.style.backgroundColor = "gray"
     } else cell.style.backgroundColor = "beige";
@@ -160,28 +180,37 @@ function initTableState(scale) {
 
   function edit(mayEdit) {
     if (mayEdit) {
-      table.addEventListener("click", cellSwitch);
+      table.addEventListener("click", clickCellSwitch);
     }
     else {
-      table.removeEventListener("click", cellSwitch);
+      table.removeEventListener("click", clickCellSwitch);
     }
   }
 
-  function display(board) {
-    table = makeTable(board);
-    var oldTable = document.body.getElementsByClassName("playingboard")[0];
-    document.body.replaceChild(table, oldTable);
+  function display(changes) {
+    var len = changes.length;
+    var x, y, needle;
+
+    for (var i = 0; i < len ; i++) {
+      x = changes[i][0] - 1;
+      y = changes[i][1] - 1;
+      needle = y + (width * x);
+      cellSwitch(cells[needle]);
+    }
   }
 }
 
 var scale = 7;
-var size = 6;
-var boardState = initBoardState(size);
+// var size = 60;
+var height = 20;
+var width = 30;
+var delay = 300;
+var boardState = initBoardState(height, width);
 var tableState = initTableState(scale);
 
 function step() {
-  var board = boardState.stepBoard();
-  tableState.display(board);
+  var changes = boardState.stepBoard();
+  tableState.display(changes);
 }
 
 function stepButton() {
@@ -199,9 +228,7 @@ function resetButton() {
   if (stopped.length > 0) {
     stopButton();
   }
-  var board = boardState.blank();
-  tableState.display(board);
-  tableState.edit(true);
+  tableState.blank();
 }
 
 function startButton() {
@@ -219,7 +246,7 @@ function mainLoop() {
   var animate = document.body.getElementsByClassName("stop");
   if (animate.length > 0) {
     step();
-    setTimeout(mainLoop, 250);
+    setTimeout(mainLoop, delay);
   }
 }
 
