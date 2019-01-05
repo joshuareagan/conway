@@ -202,9 +202,9 @@ function initTableState(scale) {
 
 var scale = 7;
 // var size = 60;
-var height = 20;
-var width = 30;
-var delay = 300;
+var height = 60;
+var width = 200;
+var delay = 0;
 var boardState = initBoardState(height, width);
 var tableState = initTableState(scale);
 
