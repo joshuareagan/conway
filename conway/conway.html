@@ -26,11 +26,13 @@
 
 This is Conway's Game of Life.
 
-<p><button onclick="startButton();" class="start">Start</button></p>
+<p><button onclick="conway.startButton();" id="Start">Start</button></p>
 
-<p><button onclick="stepButton();">Step</button></p>
+<p><button onclick="conway.stepButton();">Step</button></p>
 
-<p><button onclick="resetButton();">Reset</button></p>
+<p><button onclick="conway.resetButton();">Reset</button></p>
+
+<p>Fast <input type="range" min="1" max="500" value="250" id="Speed"> Slow</p>
 
 <script src="conway.js"></script>
 
