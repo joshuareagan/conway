@@ -1,255 +1,257 @@
+function initBoardState(height, width) {
 
+  var currentBoard;
+  var changes;
+  var boardAPIs = {
+    stepBoard, blank, tableToBoard
+  }
 
-function makeBoard(x) {
-  var wholeThing = [];
-  for (var i = 0; i < x; i++) {
-    var row = [];
-    for (var j = 0; j < x; j++)
-      row.push(false);
-    wholeThing.push(row);
-  };
-  return wholeThing;
-};
+  return boardAPIs;
 
-function printBoard(board) {
-  var len = board.length;
-  for (var i = 0; i < len; i++)
-    console.log(board[i]);
-};
+  function stepBoard() {
+    var nextBoard = addBumper(makeBoard(height, width));
+    changes = [];
 
-function identifyNeighbors(board, square) {
-
-  var last = board.length - 1;
-  var neighbors = [];
-  var x = square[0];
-  var y = square[1];
-
-  if (x == 0) {
-    if (y == 0) {
-      neighbors.push(board[last][last]);
-      neighbors.push(board[last][0]);
-      neighbors.push(board[0][last]);
-      neighbors.push(board[last][1]);
-      neighbors.push(board[1][last]);
+    for (var i = 1; i <= height; i++) {
+      for (var j = 1; j <= width; j++) {
+        squareStep(currentBoard, nextBoard, [i, j]);
+      }
     }
-    else if (y == last) {
-      neighbors.push(board[last][0]);
-      neighbors.push(board[last][last]);
-      neighbors.push(board[0][0]);
-      neighbors.push(board[last][last - 1]);
-      neighbors.push(board[1][0]);
+
+    currentBoard = nextBoard;
+    return changes;
+  }
+
+  function blank() {
+    currentBoard = addBumper(makeBoard(height, width));
+    return currentBoard;
+  }
+
+  function tableToBoard(table) {
+    var k = 0;
+ 
+    for (var i = 1; i <= height; i++) {
+      for (var j = 1; j <= width; j++) {
+        var cell = document.body.getElementsByClassName("cell")[k];
+        var liveCell = (cell.style.backgroundColor == "gray");
+
+        if (liveCell != currentBoard[i][j][0]) {
+          adjustNeighborCount(currentBoard, [i, j], liveCell);
+        }
+
+        currentBoard[i][j][0] = liveCell;
+        k++;
+      }
+    }
+    return currentBoard;
+  }
+
+  function adjustNeighborCount(board, spot, birth) {
+    var x = spot[0];
+    var y = spot[1];
+
+    for (var i = x - 1; i <= x + 1; i++) {
+      for (var j = y - 1; j <= y + 1; j++) {
+        if ( (x == i) && (y == j) ) continue;
+        if (birth) board[i][j][1]++;
+          else board[i][j][1]--;
+      }
+    }
+    return board;
+  }
+
+  function makeBoard(height, width) {
+    var board = [];
+
+    for (var i = 0; i < height; i++) {
+      var row = [];
+      for (var j = 0; j < width; j++) {
+        row.push([false, 0]);
+      }
+      board.push(row);
+    }
+    return board;
+  }
+
+  function squareStep(lastBoard, nextBoard, spot) {
+    var x = spot[0];
+    var y = spot[1];
+    var alive = lastBoard[x][y][0];
+    var neighbors = lastBoard[x][y][1];
+
+    nextBoard[x][y][0] = ( (neighbors == 3) ||
+                           ((neighbors == 2) && (alive)) );
+    nextBoard[x][y][1] += neighbors;
+
+    if (alive != nextBoard[x][y][0]) {
+      adjustNeighborCount(nextBoard, spot, nextBoard[x][y][0]);
+      changes.push(spot);
+    }
+
+    return nextBoard;
+  }
+
+  function addBumper(board) {
+    var topLeft = board[0][0];
+    var topRight = board[0][width-1];
+    var bottomLeft = board[height-1][0];
+    var bottomRight = board[height-1][width-1];
+
+    var newTop = [];
+    newTop.push(bottomRight);
+    for (var i = 0; i < width; i++) {
+      newTop.push(board[height-1][i]);
+    }
+    newTop.push(bottomLeft);
+    board.unshift(newTop);
+
+    var newBottom = [];
+    newBottom.push(topRight);
+    for (var i = 0; i < width; i++) {
+      newBottom.push(board[1][i]);
+    }
+    newBottom.push(topLeft);
+    board.push(newBottom);
+
+    for (var i = 1; i <= height; i++) {
+      board[i].unshift(board[i][width-1]);
+      board[i].push(board[i][1]);
+    }
+
+    return board;
+  }
+}
+
+function initTableState(scale) {
+
+  var table = makeTable(boardState.blank());
+  document.body.appendChild(table);
+  edit(true);
+  var cells = document.body.getElementsByClassName("cell");
+
+  var tableAPIs = {
+    edit, display, table, blank
+  }
+  return tableAPIs;
+
+  function makeTable(board) {
+    var table = elemClass("table", "playingboard");
+    for (var i = 0; i < height; i++) {
+      var row = elemClass("tr");
+      table.appendChild(row);
+      for (var j = 0; j < width; j++) {
+        var cell = elemClass("td", "cell");
+        cell.style.width = scale + "px";
+        cell.style.height = scale + "px";
+        if (board[i+1][j+1][0]) cell.style.backgroundColor = "gray";
+          else cell.style.backgroundColor = "beige";
+        table.childNodes[i].appendChild(cell);
+      }
+    }
+    return table;
+  }
+
+  function blank() {
+    newTable = makeTable(boardState.blank());
+    table.parentNode.replaceChild(newTable, table);
+    table = newTable;
+    edit(true);
+    cells = document.body.getElementsByClassName("cell");
+  }
+
+  function clickCellSwitch(event) {
+    var cell = event.target;
+    cellSwitch(cell);
+  }
+
+  function cellSwitch(cell) {
+    if (cell.style.backgroundColor == "beige") {
+      cell.style.backgroundColor = "gray"
+    } else cell.style.backgroundColor = "beige";
+  }
+
+  function edit(mayEdit) {
+    if (mayEdit) {
+      table.addEventListener("click", clickCellSwitch);
     }
     else {
-      neighbors.push(board[last][y + 1]);
-      neighbors.push(board[last][y]);
-      neighbors.push(board[last][y - 1]);
-    };
-  };
-
-  if (x == last) {
-    if (y == 0) {
-      neighbors.push(board[last][last]);
-      neighbors.push(board[0][0]);
-      neighbors.push(board[0][last]);
-      neighbors.push(board[last - 1][last]);
-      neighbors.push(board[0][1]);
+      table.removeEventListener("click", clickCellSwitch);
     }
-    else if (y == last) {
-      neighbors.push(board[last][0]);
-      neighbors.push(board[0][last]);
-      neighbors.push(board[0][0]);
-      neighbors.push(board[0][last - 1]);
-      neighbors.push(board[last - 1][0]);
+  }
+
+  function display(changes) {
+    var len = changes.length;
+    var x, y, needle;
+
+    for (var i = 0; i < len ; i++) {
+      x = changes[i][0] - 1;
+      y = changes[i][1] - 1;
+      needle = y + (width * x);
+      cellSwitch(cells[needle]);
     }
-    else {
-      neighbors.push(board[0][y + 1]);
-      neighbors.push(board[0][y]);
-      neighbors.push(board[0][y - 1]);
-    };
-  };
+  }
+}
 
-  if ((y == 0) && ((x != 0) && (x != last))) {
-    neighbors.push(board[x + 1][last]);
-    neighbors.push(board[x][last]);
-    neighbors.push(board[x - 1][last]);
-  };
-
-  if ((y == last) && ((x != 0) && (x != last))) {
-    neighbors.push(board[x + 1][0]);
-    neighbors.push(board[x][0]);
-    neighbors.push(board[x - 1][0]);
-  };
-
-  if (x == 0) var xMin = 0;
-    else var xMin = x - 1;
-  if (x == last) var xMax = last;
-    else var xMax = x + 1;
-  if (y == 0) var yMin = 0;
-    else var yMin = y - 1;
-  if (y == last) var yMax = last;
-    else var yMax = y + 1;
-
-  for (var i = xMin; i <= xMax; i++)
-    for (var j = yMin; j <= yMax; j++)
-      neighbors.push(board[i][j]);
-
-  var liveNeighbors = 0
-
-    for (var i = 0; i < 9; i++)
-      if (neighbors[i] == true) liveNeighbors++;
-
-  if (board[x][y] == true) liveNeighbors--;
-  return liveNeighbors;
-};
-
-function squareStep(board, square) {
-  var liveNeighbors = identifyNeighbors(board, square);
-  var x = square[0];
-  var y = square[1];
-
-  if ( (liveNeighbors == 3) ||
-       ((liveNeighbors == 2) && (board[x][y])) ) return true;
-  return false;
-};
-
-function boardStep(board) {
-  var len = board.length;
-  var nextBoard = makeBoard(size);
-  for (var i = 0; i < len; i++)
-    for (var j = 0; j < len; j++)
-      nextBoard[i][j] = squareStep(board, [i, j]);
-  return nextBoard;
-};
-
-function makeAlive(board, square) {
-  board[square[0]][square[1]] = true;
-  return board;
-};
-
-function elt(name, className) {
-  var elt = document.createElement(name);
-  if (className) elt.className = className;
-  return elt;
-};
-
-function makeTable(board) {
-  len = board.length;
-  var table = elt("table", "playingboard");
-  for (var i = 0; i < len; i++) {
-    var row = elt("tr");
-    table.appendChild(row);
-    for (var j = 0; j < len; j++) {
-      var cell = elt("td", "cell");
-      cell.style.width = scale + "px";
-      cell.style.height = scale + "px";
-      if (board[i][j]) cell.style.backgroundColor = "gray";
-        else cell.style.backgroundColor = "beige";
-      table.childNodes[i].appendChild(cell);
-    };
-  };
-  return table;
-};
-
-function cellSwitch(event) {
-  var cell = event.target;
-  if (cell.style.backgroundColor == "beige") {
-    cell.style.backgroundColor = "gray"
-  } else cell.style.backgroundColor = "beige";
-};
-
-function canEditTable() {
-  table.addEventListener("click", cellSwitch);
-};
-
-function noEditTable() {
-  table.removeEventListener("click", cellSwitch);
-};
-
-var size = 60;
-var scale = 7;
-var board = makeBoard(size);
-var table = document.body.appendChild(makeTable(board));
-
-canEditTable();
-
-function printBoard(board) {
-  var len = board.length;
-  for (var i = 0; i < len; i++)
-    console.log(board[i]);
-};
-
-function tableRead(table) {
-  var nextBoard = makeBoard(size);
-  var k = 0;
-  for (var i = 0; i < size; i++)
-    for (var j = 0; j < size; j++) {
-      var cell = document.body.getElementsByClassName("cell")[k];
-      if (cell.style.backgroundColor == "beige") nextBoard[i][j] = false;
-        else nextBoard[i][j] = true;
-      k++;
-    };
-  return nextBoard;
-};
+var scale = 3;
+var height = 60;
+var width = 250;
+var delay = 0;
+var boardState = initBoardState(height, width);
+var tableState = initTableState(scale);
 
 function step() {
-  board = boardStep(board);
-  displayNewBoard(board);
-};
-
-function reset() {
-  board = makeBoard(size);
-  displayNewBoard(board);
-  canEditTable();
-};
+  var changes = boardState.stepBoard();
+  tableState.display(changes);
+}
 
 function stepButton() {
   var stopped = document.body.getElementsByClassName("stop");
   if (stopped.length > 0) {
     stopButton();
-  };
-  board = tableRead(table);
+  }
+  boardState.tableToBoard(tableState.table);
   step();
-  canEditTable();
-};
+  tableState.edit(true);
+}
 
 function resetButton() {
   var stopped = document.body.getElementsByClassName("stop");
   if (stopped.length > 0) {
     stopButton();
-  };
-  reset();
-};
+  }
+  tableState.blank();
+}
 
 function startButton() {
   var button = document.body.getElementsByClassName("start")[0];
-  var newButton = elt("button", "stop");
+  var newButton = elemClass("button", "stop");
   newButton.textContent = "Stop";
   newButton.setAttribute("onclick", "stopButton();");
   button.parentNode.replaceChild(newButton, button);
-  noEditTable();
-  board = tableRead(table);
+  tableState.edit(false);
+  boardState.tableToBoard(tableState.table);
   mainLoop();
-};
-
-function displayNewBoard(board) {
-  table = makeTable(board);
-  var oldTable = document.body.getElementsByClassName("playingboard")[0];
-  document.body.replaceChild(table, oldTable);
-};
+}
 
 function mainLoop() {
   var animate = document.body.getElementsByClassName("stop");
   if (animate.length > 0) {
     step();
-    setTimeout(mainLoop, 2);
-  };
-};
+    setTimeout(mainLoop, delay);
+  }
+}
 
 function stopButton() {
   var button = document.body.getElementsByClassName("stop")[0];
-  var newButton = elt("button", "start");
+  var newButton = elemClass("button", "start");
   newButton.textContent = "Start";
   newButton.setAttribute("onclick", "startButton();");
   button.parentNode.replaceChild(newButton, button);
-  canEditTable();
-};
+  tableState.edit(true);
+}
+
+  function elemClass(name, className) {
+    var elem = document.createElement(name);
+    if (className) elem.className = className;
+    return elem;
+  }
