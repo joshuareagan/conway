@@ -7,10 +7,11 @@
 var conway = function() {
 "use strict";
 
-  // customizable values
+  // customizable constants
   const scale  =   6;                     // cell size (px)
   const height =  65;                     // number of grid rows
   const width  =  90;                     // number of grid columns
+  const rand   =  40;                     // % of random live cells
   const liveColor = "cornflowerblue";     // color of living cells
   const deadColor = "beige";              // color of dead cells
 
@@ -29,10 +30,11 @@ var conway = function() {
    */
   var boardState = initBoardState();
   var tableState = initTableState();
+
   var buttonState = new initButtonState();
     
   // APIs to be used by buttons from conway.html
-  return { clickStart, clickStop, clickStep, clickReset };
+  return { clickStart, clickStop, clickStep, clickReset, clickRandom };
 
   function clickStart() {
     buttonState.startButtonIn(false);
@@ -43,9 +45,9 @@ var conway = function() {
     // upon "Start" this is the main loop of the program
     function mainLoop() {
       if (buttonState.running) {
+        step();
         setTimeout(function() {
           requestAnimationFrame(mainLoop);
-          step();
         }, buttonState.delay);
       }
     }
@@ -53,27 +55,40 @@ var conway = function() {
 
   function step() {
     var changes = boardState.stepBoard();
-    if ( buttonState.running && !changes.length ) {
+    if (!changes.length) {
       clickStop();
     }
-    tableState.display(changes);
+    else {
+      tableState.display(changes);
+      buttonState.adjustGen(true);
+    }
   }
 
   function clickStop() {
-    buttonState.startButtonIn(true);
-    tableState.edit(true);
+    if (buttonState.running) {
+      buttonState.startButtonIn(true);
+      tableState.edit(true);
+    }
   }
 
   function clickStep() {
-    if (buttonState.running) clickStop();
+    clickStop();
     boardState.tableToBoard(tableState.table);
     step();
   }
 
   function clickReset() {
-    if (buttonState.running) clickStop();
+    clickStop();
     boardState.blank();
     tableState.blank();
+    buttonState.adjustGen(false);
+  }
+
+  function clickRandom() {
+    clickStop();
+    var changes = boardState.random();
+    tableState.display(changes);
+    buttonState.adjustGen(false);
   }
 
   // Beyond this point are the 3 object `init` functions. 
@@ -105,7 +120,7 @@ var conway = function() {
      * `tableToBoard` takes input (in the form of a table)
      * and updates the game board state to match the input.
      */
-    return { stepBoard, blank, tableToBoard }
+    return { stepBoard, blank, tableToBoard, random }
 
     function stepBoard() {
       var nextBoard = addBumper(makeBoard(height, width));
@@ -129,7 +144,7 @@ var conway = function() {
     function tableToBoard(table) {
       var k = 0;
       var cells = document.body.getElementsByClassName("cell"); 
-   
+
       for (var i = 1; i <= height; i++) {
         for (var j = 1; j <= width; j++) {
           var cell = cells[k];
@@ -143,7 +158,6 @@ var conway = function() {
           k++;
         }
       }
-      return currentBoard;
     }
 
     function adjustNeighborCount(board, spot, birth) {
@@ -157,7 +171,6 @@ var conway = function() {
             else board[i][j][1]--;
         }
       }
-      return board;
     }
 
     function makeBoard(height, width) {
@@ -171,6 +184,25 @@ var conway = function() {
         board.push(row);
       }
       return board;
+    }
+
+    function random() {
+      var alive;
+      var rawRand;
+      changes = [];
+
+      for (var i = 1; i <= height; i++) {
+        for (var j = 1; j <= width; j++) {
+          rawRand = Math.floor((Math.random() * 100) + 1);
+          alive = rawRand > (100 - rand);
+          if (alive != currentBoard[i][j][0]) {
+            adjustNeighborCount(currentBoard, [i, j], alive);
+            changes.push([i, j]);
+          }
+          currentBoard[i][j][0] = alive;
+        }
+      }
+      return changes;
     }
 
     function squareStep(lastBoard, nextBoard, spot) {
@@ -187,8 +219,6 @@ var conway = function() {
         adjustNeighborCount(nextBoard, spot, nextBoard[x][y][0]);
         changes.push(spot);
       }
-
-      return nextBoard;
     }
 
     /* `addBumper` adds a layer of cells around the whole 
@@ -311,11 +341,15 @@ var conway = function() {
     function _clickCellSwitch(event) {
       var cell = event.target;
       cellSwitch(cell);
+      // This following line is evil but very convenient.
+      // Main object references are otherwise limited to top
+      // of program.
+      buttonState.adjustGen(false);
     }
   }
 
-  /* This function produces the object that governs "button 
-   * state", i.e., which of the two buttons is visible: "Start"
+  /* This function produces the object that governs UI state,
+   * e.g., which of the two buttons is visible: "Start"
    * or "Stop".
    */
   function initButtonState() {
@@ -326,16 +360,29 @@ var conway = function() {
      * measured in ms. delay is controlled by a range 
      * slider.
      *
-     * `startButtonIn` is a method that takes a boolean. 
-     *  Which button should be visible?
+     * `this.generation` is the number of elapsed 
+     * generations since the last edit of the game board.
+     *
+     * `this.startButtonIn` is a method that takes a 
+     * boolean. Which button should be visible?
      */
-    this.running = false;
     var slider = document.getElementById("Speed");
-    this.delay = slider.value;
     var myself = this;
+
+    this.running = false;
+    this.delay = slider.value;
     slider.addEventListener("input", function() {
                                        myself.delay = slider.value;
                                      });
+
+    var genNode = document.getElementById("Generation");
+    this.generation = 0;
+
+    this.adjustGen = function(a) {
+      if (a) this.generation++;
+      else this.generation = 0;
+      genNode.innerHTML = this.generation;
+    }
 
     var startButton = document.getElementById("Start");
     var stopButton = document.createElement("button");
