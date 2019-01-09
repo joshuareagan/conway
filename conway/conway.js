@@ -7,12 +7,12 @@
 var conway = function() {
 "use strict";
 
-  // customizable variables
-  var scale  =    6;                    // cell size (px)
-  var height =   65;                    // number of grid rows
-  var width  =   90;                    // number of grid columns
-  var liveColor = "cornflowerblue";     // color of living cells
-  var deadColor = "beige";              // color of dead cells
+  // customizable values
+  const scale  =   6;                     // cell size (px)
+  const height =  65;                     // number of grid rows
+  const width  =  90;                     // number of grid columns
+  const liveColor = "cornflowerblue";     // color of living cells
+  const deadColor = "beige";              // color of dead cells
 
   // game state
   /*
@@ -20,86 +20,63 @@ var conway = function() {
    * and contains the core game logic.
    *
    * `tableState` is the object that controls the display
-   * of the game board.  A simple table is used.
+   * of the game board, as well as user input.  A simple 
+   * table is used.
    *
-   * `running` is a boolean value that determines whether 
-   * the game is running, i.e., the "Start" button was 
-   * pressed. "Stop" turns it off.
-   *
-   * `delay` determines how long to pause (in ms) between 
-   * turns, when the game is `running`.  This value is 
-   * controlled by a UI slider.
+   * `buttonState` is an object that controls which UI tools
+   * (buttons and slider) are available to the user and what 
+   * their state is.
    */
   var boardState = initBoardState();
   var tableState = initTableState();
-  var running;
-  var delay = sliderSetup();
-
+  var buttonState = new initButtonState();
+    
   // APIs to be used by buttons from conway.html
-  return { startButton, stopButton, stepButton, resetButton };
+  return { clickStart, clickStop, clickStep, clickReset };
 
-  function startButton() {
-    switchOut("Start", "Stop");
-    running = true;
+  function clickStart() {
+    buttonState.startButtonIn(false);
     tableState.edit(false);
     boardState.tableToBoard(tableState.table);
     mainLoop();
 
     // upon "Start" this is the main loop of the program
     function mainLoop() {
-      if (running) {
+      if (buttonState.running) {
         setTimeout(function() {
           requestAnimationFrame(mainLoop);
-          if (running) step();
-        }, delay);
+          step();
+        }, buttonState.delay);
       }
     }
   }
 
   function step() {
     var changes = boardState.stepBoard();
-    if ( running && !changes.length ) {
-      stopButton();
+    if ( buttonState.running && !changes.length ) {
+      clickStop();
     }
     tableState.display(changes);
   }
 
-  function stopButton() {
-    switchOut("Stop", "Start");
-    running = false;
+  function clickStop() {
+    buttonState.startButtonIn(true);
     tableState.edit(true);
   }
 
-  function stepButton() {
-    if (running) stopButton();
+  function clickStep() {
+    if (buttonState.running) clickStop();
     boardState.tableToBoard(tableState.table);
     step();
   }
 
-  function resetButton() {
-    if (running) stopButton();
+  function clickReset() {
+    if (buttonState.running) clickStop();
     boardState.blank();
     tableState.blank();
   }
 
-  // a function for switching the "Start" and "Stop" buttons
-  function switchOut(oldLabel, newLabel) {
-    var oldButton = document.getElementById(oldLabel);
-    var newButton = document.createElement("button");
-    newButton.id = newLabel;
-    newButton.textContent = newLabel;
-    var lowerLabel = "conway." + newLabel.toLowerCase();
-    newButton.setAttribute("onclick", lowerLabel + "Button();");
-    oldButton.parentNode.replaceChild(newButton, oldButton);
-  }
-
-  function sliderSetup() {
-    var slider = document.getElementById("Speed");
-    slider.addEventListener("input", function() {
-      delay = slider.value;
-    }); 
-    return slider.value;
-  }
+  // Beyond this point are the 3 object `init` functions. 
 
   /* this function creates the object used to maintain
    * core game data state.
@@ -108,7 +85,9 @@ var conway = function() {
 
     // core game data state
     /*
-     * `currentBoard` is a 2D array of the game board.
+     * `currentBoard` is a 2D array of the game board. 
+     * Each cell has data for (i) whether it's alive,
+     * and (ii) how many live neighbors it has.
      *
      * `changes` is an array of changes from the last 
      * update to the board.
@@ -149,10 +128,11 @@ var conway = function() {
 
     function tableToBoard(table) {
       var k = 0;
+      var cells = document.body.getElementsByClassName("cell"); 
    
       for (var i = 1; i <= height; i++) {
         for (var j = 1; j <= width; j++) {
-          var cell = document.body.getElementsByClassName("cell")[k];
+          var cell = cells[k];
           var liveCell = (cell.style.backgroundColor == liveColor);
 
           if (liveCell != currentBoard[i][j][0]) {
@@ -253,9 +233,9 @@ var conway = function() {
    */
   function initTableState() {
     var table = makeTable();
+    var cells = document.body.getElementsByClassName("cell");
     document.body.appendChild(table);
     edit(true);
-    var cells = document.body.getElementsByClassName("cell");
 
     // methods for modifying table state
     /*
@@ -299,27 +279,6 @@ var conway = function() {
       table.parentNode.replaceChild(newTable, table);
       table = newTable;
       edit(true);
-      cells = document.body.getElementsByClassName("cell");
-    }
-
-    function clickCellSwitch(event) {
-      var cell = event.target;
-      cellSwitch(cell);
-    }
-
-    function cellSwitch(cell) {
-      if (cell.style.backgroundColor == deadColor) {
-        cell.style.backgroundColor = liveColor
-      } else cell.style.backgroundColor = deadColor;
-    }
-
-    function edit(mayEdit) {
-      if (mayEdit) {
-        table.addEventListener("click", clickCellSwitch);
-      }
-      else {
-        table.removeEventListener("click", clickCellSwitch);
-      }
     }
 
     function display(changes) {
@@ -331,6 +290,66 @@ var conway = function() {
         y = changes[i][1] - 1;
         needle = y + (width * x);
         cellSwitch(cells[needle]);
+      }
+    }
+
+    function cellSwitch(cell) {
+      if (cell.style.backgroundColor == deadColor) {
+        cell.style.backgroundColor = liveColor
+      } else cell.style.backgroundColor = deadColor;
+    }
+
+    function edit(mayEdit) {
+      if (mayEdit) {
+        table.addEventListener("click", _clickCellSwitch);
+      }
+      else {
+        table.removeEventListener("click", _clickCellSwitch);
+      }
+    } 
+
+    function _clickCellSwitch(event) {
+      var cell = event.target;
+      cellSwitch(cell);
+    }
+  }
+
+  /* This function produces the object that governs "button 
+   * state", i.e., which of the two buttons is visible: "Start"
+   * or "Stop".
+   */
+  function initButtonState() {
+    // button state APIs
+    /* `this.running` is a boolean -- is the game running?
+     *
+     * `this.delay` determines game speed. The delay is 
+     * measured in ms. delay is controlled by a range 
+     * slider.
+     *
+     * `startButtonIn` is a method that takes a boolean. 
+     *  Which button should be visible?
+     */
+    this.running = false;
+    var slider = document.getElementById("Speed");
+    this.delay = slider.value;
+    var myself = this;
+    slider.addEventListener("input", function() {
+                                       myself.delay = slider.value;
+                                     });
+
+    var startButton = document.getElementById("Start");
+    var stopButton = document.createElement("button");
+    stopButton.id = "Stop";
+    stopButton.textContent = "Stop";
+    stopButton.setAttribute("onclick", "conway.clickStop();");
+
+    this.startButtonIn = function(a) {
+      this.running = !a;
+      if (a) {
+        stopButton.parentNode.replaceChild(startButton, stopButton);
+      }
+      else {
+        startButton.parentNode.replaceChild(stopButton, startButton);
       }
     }
   }
