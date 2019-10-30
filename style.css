@@ -1,0 +1,105 @@
+html, body {
+  margin: 0;
+  background-color: rgb(200, 200, 200);
+ }
+
+a {
+  color: rgb(30, 90, 140);
+  font-weight: bold;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+
+}
+
+.title2 {
+  font-weight: bold;
+  font-size: 28px;
+  text-align: center;
+  color: white;
+}
+
+.conwaycontainer {
+  padding-top: 3em;
+  padding-bottom: 5em;
+  text-align: center;
+  width: 100%;
+  background-color: rgb(50, 110, 160);
+}
+
+button, select {
+  text-align: center;
+  background-color: steelblue;
+  width: 6em;
+  color: white;
+  padding: 6px 3px;
+  margin: 0.1em;
+  font-family: Georgia, serif;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+}
+button:hover, select:hover { background-color: rgb(30, 90, 140) }
+.cell {
+  border: 1px solid rgb(200, 200, 200);
+}
+.playingboard {
+  border-collapse: collapse;
+  margin: 2em auto 0em auto;
+  border-spacing: 0;
+  color-adjust: exact;
+  border: 2px solid rgb(200, 200, 200);
+}
+.controls {
+  text-align: center;
+  font-family: Georgia, serif;
+  font-size: 16px;
+  background-color: rgb(240, 240, 240);
+  width: 650px;
+  margin: 0em auto;
+  padding: 1em 0em .5em 0em;
+  border-left: 1.5px solid rgb(200, 200, 200);
+  border-right: 1.5px solid rgb(200, 200, 200);
+  border-bottom: 1.5px solid rgb(200, 200, 200);
+}
+.miscbox {
+  margin: .5em auto;
+}
+#Start { background-color: seagreen }
+#Start:hover { background-color: darkgreen }
+#Stop { background-color: firebrick }
+#Stop:hover { background-color: maroon }
+#select {
+  width: 10em;
+  margin-right: 1em;
+}
+#Speed {
+  padding: 0em 0em;
+  width: 6em;
+  color: steelblue;
+  position: relative;
+  top: 7px;
+  left: 0px;
+}
+.notbuttons {
+  position: relative;
+  font-family: Georgia, serif;
+  font-size: 16px;
+  font-weight: bold;
+  color: steelblue;
+}
+.gen {
+  margin-left: 1em;
+  margin-right: 2em;
+  color: steelblue;
+  font-weight: bold;
+  position: relative;
+}
+#Generation {
+  font-size: 16px;
+  position: absolute;
+  top: 0px;
+  left: 7em;
+}

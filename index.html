@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Joshua Reagan</title>
+  <link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+<body>
+
+<div class="conwaycontainer">
+  <div class="title2">Conway's Game of Life</div>
+<span id="tableGoesHere"></span>
+
+<div class="controls">
+  <div>
+    <button onclick="conway.clickStart();" id="Start">Start</button>
+    <button onclick="conway.clickStep();">Step</button>
+    <button onclick="conway.clickReset(false);">Reset</button>
+    <button onclick="conway.clickReset(true);">Random</button>
+ </div>
+  <div class="miscbox">
+   <select id="select">
+      <option value="null">Pick a Pattern</option>
+      <option value="glider">Glider</option>
+      <option value="pulsar">Pulsar</option>
+      <option value="gliderGun">Gosper Gun</option>
+      <option value="supernova">Supernova</option>
+      <option value="tumbler">Tumbler</option>
+      <option value="spaceship">Spaceship</option>
+      <option value="ten">Ten Cells</option>
+      <option value="toadPusher">Toad Pusher</option>
+      <option value="puffer">Puffer</option>
+      <option value="bigPuffer">Bigger Puffer</option>
+      <option value="lobster">Lobster</option>
+    </select>
+    <span class="notbuttons">
+      <span>Fast</span>
+      <input type="range" min="0" max="6" value="5" id="Speed" />
+      <span>Slow</span>
+      <span class="gen">
+      Generation: <span id="Generation">0</span>
+      </span></span>
+  </div>
+</div>
+</div>
+
+<script src="conway.js"></script>
+
+</body>
+</html>
