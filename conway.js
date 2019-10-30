@@ -122,7 +122,7 @@ var conway = function() {
                   else alive = false;
 
                   if (alive != this.board[i][j].alive) {
-                      this.adjust_n(this.board, [i, j], alive);
+                      this._adjust_n(this.board, [i, j], alive);
                       changes.push([i, j]);
                   }
                   this.board[i][j].alive = alive;
@@ -159,7 +159,7 @@ var conway = function() {
               for (var j = y - 1; j <= y + 1; j++) {
                   if ( (x == i) && (y == j) ) continue;
                   if (birth) board[i][j].neighbors++;
-                      else board[i][j].neighbors--;
+                  else board[i][j].neighbors--;
               }
           }
       }
